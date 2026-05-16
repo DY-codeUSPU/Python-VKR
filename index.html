@@ -86,13 +86,11 @@
                 <i class="fas fa-chevron-up text-[10px] text-slate-400 transition-transform" id="settings-panel-icon"></i>
             </button>
             <div id="settings-panel" class="mt-3">
-                <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">api ключи</label>
                 <label class="text-[10px] font-black text-slate-400 uppercase mb-1 block">модель</label>
                 <select id="model-select" class="w-full p-2 mb-3 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none">
                     <option value="gemini">gemini</option>
                     <option value="gigachat">gigachat</option>
                 </select>
-                <button onclick="saveApiKeys()" class="w-full py-2 bg-slate-800 text-white rounded-lg text-xs font-bold hover:bg-slate-700">сохранить ключи</button>
             </div>
         </div>
     </aside>
@@ -4849,8 +4847,6 @@ function init() {
     document.getElementById('run-btn-final').addEventListener('click', () => runCode('final-editor', 'final-output', 'final-output-text'));
 
     if (typeof brython === 'function') brython();
-    if (localStorage.getItem('gemini_key')) document.getElementById('gemini-key-input').value = localStorage.getItem('gemini_key');
-    if (localStorage.getItem('gigachat_auth_key')) document.getElementById('gigachat-key-input').value = localStorage.getItem('gigachat_auth_key');
 
     renderMenu();
     updateModelBadges();
@@ -5302,11 +5298,6 @@ function toggleSettingsPanel() {
     icon.classList.toggle('rotate-180');
 }
 
-function saveApiKeys() {
-    localStorage.setItem('gemini_key', document.getElementById('gemini-key-input').value);
-    localStorage.setItem('gigachat_auth_key', document.getElementById('gigachat-key-input').value);
-    alert('Ключи сохранены');
-}
 
 function updateModelBadges() {
     const model = document.getElementById('model-select').value;
