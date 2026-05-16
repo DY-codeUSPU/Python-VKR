@@ -77,8 +77,21 @@ def gemini():
     try:
         response = requests.post(url, json={"contents": contents})
         result = response.json()
-        text = result['candidates'][0]['content']['parts'][0]['text']
+
+        # логируем полный ответ для отладки
+        print("Gemini response:", result)
+
+        # проверяем наличие candidates
+        if 'error' in result:
+            return jsonify(dict(error=result['error'].get('message', 'Ошибка Gemini'))), 500
+        
+        candidates = result.get('candidates', [])
+        if not candidates:
+            return jsonify(dict(error=f"Gemini не вернул ответ. Полный ответ: {result}")), 500
+
+        text = candidates[0]['content']['parts'][0]['text']
         return jsonify({"text": text})
+
     except Exception as e:
         return jsonify(dict(error=str(e))), 500
 
