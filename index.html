@@ -87,8 +87,6 @@
             </button>
             <div id="settings-panel" class="mt-3">
                 <label class="text-[10px] font-black text-slate-400 uppercase mb-2 block">api ключи</label>
-                <input type="password" id="gemini-key-input" placeholder="gemini api key" class="w-full p-2 mb-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none">
-                <input type="password" id="gigachat-key-input" placeholder="gigachat auth token" class="w-full p-2 mb-2 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none">
                 <label class="text-[10px] font-black text-slate-400 uppercase mb-1 block">модель</label>
                 <select id="model-select" class="w-full p-2 mb-3 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none">
                     <option value="gemini">gemini</option>
@@ -5322,29 +5320,28 @@ document.getElementById('model-select').addEventListener('change', updateModelBa
 
 // ==================== API ====================
 async function callGeminiAPI(prompt, systemInstruction) {
-    const apiKey = localStorage.getItem('gemini_key') || document.getElementById('gemini-key-input').value;
-    if (!apiKey) return { error: true, msg: 'Введите Gemini API key' };
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`;
     try {
-        const r = await fetch(url, {
+        const r = await fetch('https://python-vkr.onrender.com/gemini', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ system_instruction: { parts: [{ text: systemInstruction }] }, contents: [{ parts: [{ text: prompt }] }] })
+            body: JSON.stringify({
+                messages: [
+                    { role: 'user', text: systemInstruction + '\n\n' + prompt }
+                ]
+            })
         });
         const d = await r.json();
-        if (d.error) return { error: true, msg: d.error.message };
-        return { error: false, text: d.candidates[0].content.parts[0].text };
+        if (d.error) return { error: true, msg: d.error };
+        return { error: false, text: d.text };
     } catch(e) { return { error: true, msg: 'Ошибка связи с Gemini' }; }
 }
 
 async function getGigaChatToken() {
-    const rawKey = localStorage.getItem('gigachat_auth_key') || document.getElementById('gigachat-key-input').value;
-    const authKey = rawKey.replace('Basic ', '').trim();
-    if (!authKey) return null;
     try {
         const r = await fetch('https://python-vkr.onrender.com/auth', {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ auth_key: authKey })
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({})   // ← ключ больше не передаём
         });
         const d = await r.json();
         return d.access_token;
