@@ -5571,10 +5571,14 @@ async function callGigaChatAPI(prompt, systemPrompt) {
 }
 
 async function dispatchAIRequest(prompt, systemPrompt) {
-    const model = document.getElementById('model-select').value;
-   return model === "gigachat" 
-    ? await callGigaChatAPI(prompt, systemPrompt) 
-    : await callYandexAPI(prompt, systemPrompt);
+  const model = document.getElementById('model-select').value;
+  if (model === 'gigachat') {
+    return await callGigaChatAPI(prompt, systemPrompt);
+  } else if (model === 'alice') {
+    return await callYandexAPI(prompt, systemPrompt);
+  }
+  // fallback
+  return { error: true, msg: 'Модель не выбрана' };
 }
 
 // ESC — выход из полноэкранного режима (задел)
