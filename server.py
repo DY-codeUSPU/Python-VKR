@@ -58,43 +58,44 @@ def chat():
 
 # ── Gemini ──────────────────────────────────────────────────
 
-@app.route('/gemini', methods=['POST'])
-def gemini():
-    if not GEMINI_API_KEY:
-        return jsonify(dict(error="ключ Gemini не настроен на сервере")), 500
+@app.route('/yandex', methods=['POST'])
+def yandex():
+    if not YANDEX_API_KEY or not YANDEX_FOLDER_ID:
+        return jsonify(dict(error="ключ YandexGPT не настроен на сервере")), 500
 
     data = request.json
     messages = data.get('messages')
     if not messages:
         return jsonify(dict(error="некорректные данные запроса")), 400
 
-    contents = [
-        {"role": m["role"], "parts": [{"text": m["text"]}]}
-        for m in messages
-    ]
-
-    url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
+    url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
+    headers = {
+        'Content-Type': 'application/json',
+        'Authorization': f'Api-Key {YANDEX_API_KEY}',
+        'x-folder-id': YANDEX_FOLDER_ID
+    }
+    payload = {
+        "modelUri": f"gpt://{YANDEX_FOLDER_ID}/yandexgpt-lite/latest",
+        "completionOptions": {
+            "stream": False,
+            "temperature": 0.6,
+            "maxTokens": 2000
+        },
+        "messages": [
+            {"role": m["role"], "text": m["text"]}
+            for m in messages
+        ]
+    }
     try:
-        response = requests.post(url, json={"contents": contents})
+        response = requests.post(url, headers=headers, json=payload)
         result = response.json()
-
-        # логируем полный ответ для отладки
-        print("Gemini response:", result)
-
-        # проверяем наличие candidates
+        print("YandexGPT response:", result)
         if 'error' in result:
-            return jsonify(dict(error=result['error'].get('message', 'Ошибка Gemini'))), 500
-        
-        candidates = result.get('candidates', [])
-        if not candidates:
-            return jsonify(dict(error=f"Gemini не вернул ответ. Полный ответ: {result}")), 500
-
-        text = candidates[0]['content']['parts'][0]['text']
+            return jsonify(dict(error=result['error'].get('message', 'Ошибка YandexGPT'))), 500
+        text = result['result']['alternatives'][0]['message']['text']
         return jsonify({"text": text})
-
     except Exception as e:
         return jsonify(dict(error=str(e))), 500
-
 # ── запуск ──────────────────────────────────────────────────
 
 if __name__ == '__main__':
