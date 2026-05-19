@@ -11,17 +11,15 @@ app = Flask(__name__)
 CORS(app)
 
 GIGACHAT_AUTH_KEY = os.environ.get('GIGACHAT_AUTH_KEY')
-GEMINI_API_KEY = os.environ.get('GEMINI_API_KEY')
+YANDEX_API_KEY    = os.environ.get('YANDEX_API_KEY')
+YANDEX_FOLDER_ID  = os.environ.get('YANDEX_FOLDER_ID')
 
-# ── GigaChat: получение токена ──────────────────────────────
-
+# ── GigaChat: получение токена
 @app.route('/auth', methods=['POST'])
 def get_token():
     if not GIGACHAT_AUTH_KEY:
-        return jsonify(dict(error="ключ GigaChat не настроен на сервере")), 500
-
+        return jsonify({"error": "ключ GigaChat не настроен на сервере"}), 500
     url = "https://ngw.devices.sberbank.ru:9443/api/v2/oauth"
-    payload = {'scope': 'GIGACHAT_API_PERS'}
     headers = {
         'Content-Type': 'application/x-www-form-urlencoded',
         'Accept': 'application/json',
@@ -29,21 +27,20 @@ def get_token():
         'Authorization': f'Basic {GIGACHAT_AUTH_KEY}'
     }
     try:
-        response = requests.post(url, headers=headers, data=payload, verify=False)
-        return jsonify(response.json())
+        r = requests.post(url, headers=headers,
+                          data={'scope': 'GIGACHAT_API_PERS'}, verify=False)
+        return jsonify(r.json())
     except Exception as e:
-        return jsonify(dict(error=str(e))), 500
+        return jsonify({"error": str(e)}), 500
 
-# ── GigaChat: чат ───────────────────────────────────────────
-
+# ── GigaChat: чат
 @app.route('/chat', methods=['POST'])
 def chat():
     data = request.json
-    token = data.get('token')
+    token    = data.get('token')
     messages = data.get('messages')
     if not token or not messages:
-        return jsonify(dict(error="некорректные данные запроса")), 400
-
+        return jsonify({"error": "некорректные данные запроса"}), 400
     url = "https://gigachat.devices.sberbank.ru/api/v1/chat/completions"
     headers = {
         'Content-Type': 'application/json',
@@ -51,23 +48,20 @@ def chat():
     }
     payload = {"model": "GigaChat", "messages": messages, "stream": False}
     try:
-        response = requests.post(url, headers=headers, json=payload, verify=False)
-        return jsonify(response.json())
+        r = requests.post(url, headers=headers, json=payload, verify=False)
+        return jsonify(r.json())
     except Exception as e:
-        return jsonify(dict(error=str(e))), 500
+        return jsonify({"error": str(e)}), 500
 
-# ── Gemini ──────────────────────────────────────────────────
-
+# ── YandexGPT (Алиса)
 @app.route('/yandex', methods=['POST'])
 def yandex():
     if not YANDEX_API_KEY or not YANDEX_FOLDER_ID:
-        return jsonify(dict(error="ключ YandexGPT не настроен на сервере")), 500
-
-    data = request.json
+        return jsonify({"error": "ключ YandexGPT не настроен на сервере"}), 500
+    data     = request.json
     messages = data.get('messages')
     if not messages:
-        return jsonify(dict(error="некорректные данные запроса")), 400
-
+        return jsonify({"error": "некорректные данные запроса"}), 400
     url = "https://llm.api.cloud.yandex.net/foundationModels/v1/completion"
     headers = {
         'Content-Type': 'application/json',
@@ -76,27 +70,18 @@ def yandex():
     }
     payload = {
         "modelUri": f"gpt://{YANDEX_FOLDER_ID}/yandexgpt-lite/latest",
-        "completionOptions": {
-            "stream": False,
-            "temperature": 0.6,
-            "maxTokens": 2000
-        },
-        "messages": [
-            {"role": m["role"], "text": m["text"]}
-            for m in messages
-        ]
+        "completionOptions": {"stream": False, "temperature": 0.6, "maxTokens": 2000},
+        "messages": [{"role": m["role"], "text": m["text"]} for m in messages]
     }
     try:
-        response = requests.post(url, headers=headers, json=payload)
-        result = response.json()
-        print("YandexGPT response:", result)
+        r      = requests.post(url, headers=headers, json=payload)
+        result = r.json()
         if 'error' in result:
-            return jsonify(dict(error=result['error'].get('message', 'Ошибка YandexGPT'))), 500
+            return jsonify({"error": result['error'].get('message', 'Ошибка YandexGPT')}), 500
         text = result['result']['alternatives'][0]['message']['text']
         return jsonify({"text": text})
     except Exception as e:
-        return jsonify(dict(error=str(e))), 500
-# ── запуск ──────────────────────────────────────────────────
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
