@@ -120,7 +120,7 @@
                 <label class="text-[10px] font-black text-slate-400 uppercase mb-1 block">модель</label>
                 <select id="model-select" class="w-full p-2 mb-3 bg-slate-50 border border-slate-200 rounded-lg text-xs outline-none">
                     <option value="gemini">gemini</option>
-                    <option value="gigachat">gigachat</option>
+                    <option value="yandex">yandexgpt</option>
                 </select>
             </div>
         </div>
@@ -5524,23 +5524,25 @@ function updateModelBadges() {
 document.getElementById('model-select').addEventListener('change', updateModelBadges);
 
 // ==================== API ====================
-async function callGeminiAPI(prompt, systemInstruction) {
+async function callYandexAPI(prompt, systemInstruction) {
     try {
-        const r = await fetch('https://python-vkr.onrender.com/gemini', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+        const r = await fetch("https://python-vkr.onrender.com/yandex", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
             body: JSON.stringify({
                 messages: [
-                    { role: 'user', text: systemInstruction + '\n\n' + prompt }
+                    {role: "system", text: systemInstruction},
+                    {role: "user", text: prompt}
                 ]
             })
         });
         const d = await r.json();
-        if (d.error) return { error: true, msg: d.error };
-        return { error: false, text: d.text };
-    } catch(e) { return { error: true, msg: 'Ошибка связи с Gemini' }; }
+        if (d.error) return {error: true, msg: d.error};
+        return {error: false, text: d.text};
+    } catch(e) {
+        return {error: true, msg: "Ошибка YandexGPT"};
+    }
 }
-
 async function getGigaChatToken() {
     try {
         const r = await fetch('https://python-vkr.onrender.com/auth', {
@@ -5569,7 +5571,9 @@ async function callGigaChatAPI(prompt, systemPrompt) {
 
 async function dispatchAIRequest(prompt, systemPrompt) {
     const model = document.getElementById('model-select').value;
-    return model === 'gigachat' ? await callGigaChatAPI(prompt, systemPrompt) : await callGeminiAPI(prompt, systemPrompt);
+   return model === "gigachat" 
+    ? await callGigaChatAPI(prompt, systemPrompt) 
+    : await callYandexAPI(prompt, systemPrompt);
 }
 
 // ESC — выход из полноэкранного режима (задел)
