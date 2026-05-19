@@ -5582,8 +5582,8 @@ from browser import document, window
 import sys
 
 def run_code_handler(ev):
-    editor_id = ev.detail.get('editorId', 'code-editor')
-    text_id = ev.detail.get('textId', 'output-text')
+    editor_id = ev.detail['editorId'] if 'editorId' in ev.detail else 'code-editor'
+    text_id = ev.detail['textId'] if 'textId' in ev.detail else 'output-text'
 
     output_el = document[text_id]
     output_el.text = ""
