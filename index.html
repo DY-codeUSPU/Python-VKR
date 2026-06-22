@@ -4872,7 +4872,8 @@ print(student.info())`
 
 
 // ==================== СОСТОЯНИЕ ====================
-let editors = {};           // codemirror-редакторы по id
+window.editors = {};        // делаем доступным для Brython
+const editors = window.editors;
 let currentPage = null;     // текущая открытая страница
 let currentLesson = null;   // { blockIdx, lessonIdx, type: 'theory'|'testing'|'optimize'|'final' }
 let currentDifficulty = 'easy';
